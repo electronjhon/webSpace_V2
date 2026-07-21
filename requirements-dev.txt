@@ -1,0 +1,8 @@
+black
+isort
+mypy
+pyright
+pytest
+ruff
+playwright
+chromium

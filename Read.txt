@@ -1,0 +1,50 @@
+webSpace/
+│
+├── db.py
+├── analysis.py
+├── app.py
+├── run_collector.py   (opcional)
+├── collector_browser.py (ya lo tienes)
+└── requirements.txt
+
+Requerimientos:
+flask
+numpy
+playwright
+
+En CMD de Windows lanzar Chrome debug:
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\chrome-debug"
+
+🚀 CÓMO EJECUTAR TODO
+1. Activar entorno
+venv\Scripts\activate
+2. Instalar dependencias
+pip install -r requirements.txt
+playwright install
+3. Ejecutar API
+python app.py
+4. Ejecutar collector (en otra terminal)
+python collector_browser.py
+🎯  Lanzar
+http://localhost:5000/dashboard
+🧪 PROBAR
+📊 Estadísticas
+http://localhost:5000/stats
+🎮 Simulador
+http://localhost:5000/simulate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
