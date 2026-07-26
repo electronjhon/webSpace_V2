@@ -14,6 +14,7 @@ Autor: Space AI 2.0
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 
 from ia.integration.browser.browser_adapter import BrowserAdapter
@@ -21,6 +22,8 @@ from ia.integration.models.round_observation import RoundObservation
 
 from .duplicate_detector import DuplicateDetector
 from .round_mapper import RoundMapper
+
+logger = logging.getLogger(__name__)
 
 
 class Collector:
@@ -88,9 +91,31 @@ class Collector:
 
         for event in self._adapter.events():
 
+            logger.debug(
+                "[Collector] Received event: game_id=%d, multiplier=%s, "
+                "source=%s, captured_at=%s",
+                event.game_id,
+                event.multiplier,
+                event.source,
+                event.captured_at,
+            )
+
             observation = self._mapper.map(event)
 
+            logger.debug(
+                "[Collector] Normalized observation: round_id=%d, "
+                "multiplier=%s, source=%s, observed_at=%s",
+                observation.round_id,
+                observation.multiplier,
+                observation.source,
+                observation.observed_at,
+            )
+
             if self._duplicates.is_duplicate(observation):
+                logger.debug(
+                    "[Collector] Duplicate observation discarded: round_id=%d",
+                    observation.round_id,
+                )
                 continue
 
             self._duplicates.register(observation)
