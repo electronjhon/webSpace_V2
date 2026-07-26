@@ -1,3 +1,5 @@
+Información de la versión 1.0 de Space IA
+
 webSpace/
 │
 ├── db.py
