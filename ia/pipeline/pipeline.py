@@ -17,6 +17,7 @@ Author: Space AI 2.0
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 from core.types import Number
 from core.windows import RollingWindow
@@ -24,6 +25,8 @@ from feature_engine.feature_engine import FeatureEngine
 from ia.decision_engine.decision_context import DecisionContext
 from ia.decision_engine.decision_engine import DecisionEngine
 from ia.learning_engine.learning_engine import LearningEngine
+from ia.signal_engine.configuration import SignalConfiguration
+from ia.signal_engine.context import SignalContext
 from ia.signal_engine.signal_engine import SignalEngine
 from predictor.predictor_engine import PredictorEngine
 from predictor.strategies.strategy_type import StrategyType
@@ -115,9 +118,21 @@ class AIPipeline:
         # Decision
         #
 
-        self.decision_engine.decide(
+        decision_result = self.decision_engine.decide(
             DecisionContext(
                 prediction=prediction_result.prediction,
+            ),
+        )
+
+        #
+        # Signal
+        #
+
+        self.signal_engine.generate(
+            SignalContext(
+                decision=decision_result,
+                configuration=SignalConfiguration(),
+                timestamp=datetime.now(UTC),
             ),
         )
 
