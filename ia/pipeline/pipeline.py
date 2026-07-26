@@ -21,10 +21,12 @@ from dataclasses import dataclass, field
 from core.types import Number
 from core.windows import RollingWindow
 from feature_engine.feature_engine import FeatureEngine
+from ia.decision_engine.decision_context import DecisionContext
 from ia.decision_engine.decision_engine import DecisionEngine
 from ia.learning_engine.learning_engine import LearningEngine
 from ia.signal_engine.signal_engine import SignalEngine
 from predictor.predictor_engine import PredictorEngine
+from predictor.strategies.strategy_type import StrategyType
 from state_engine.models.state_engine_result import (
     StateEngineResult,
 )
@@ -52,6 +54,8 @@ class AIPipeline:
     signal_engine: SignalEngine
 
     learning_engine: LearningEngine
+
+    prediction_strategy: StrategyType = StrategyType.MARKOV
 
     _history: StateHistory = field(
         default_factory=StateHistory,
@@ -95,6 +99,27 @@ class AIPipeline:
         #
 
         self._history = state_result.history
+
+        #
+        # Prediction
+        #
+
+        prediction_result = self.predictor_engine.predict(
+            strategy_type=self.prediction_strategy,
+            feature_vector=feature_vector,
+            classification=state_result.classification,
+            history=self._history,
+        )
+
+        #
+        # Decision
+        #
+
+        self.decision_engine.decide(
+            DecisionContext(
+                prediction=prediction_result.prediction,
+            ),
+        )
 
         #
         # Remaining stages will be connected

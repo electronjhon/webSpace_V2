@@ -222,6 +222,7 @@ class ApplicationBootstrap:
             decision_engine=decision_engine,
             signal_engine=signal_engine,
             learning_engine=learning_engine,
+            prediction_strategy=(self.application_configuration.prediction_strategy),
         )
 
     def _build_rolling_window_builder(
