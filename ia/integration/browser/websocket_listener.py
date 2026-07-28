@@ -23,15 +23,33 @@ from playwright.sync_api import Page, WebSocket
 
 class WebSocketListener:
     """
-    Captura mensajes WebSocket emitidos por la página.
+    Captura mensajes WebSocket emitidos por una página.
 
     La clase únicamente almacena mensajes de texto recibidos.
     Toda interpretación corresponde al ProtocolParser.
     """
 
-    def __init__(self, page: Page) -> None:
+    def __init__(
+        self,
+        page: Page,
+        messages: Queue[str] | None = None,
+    ) -> None:
+        """
+        Inicializa el listener.
+
+        Parameters
+        ----------
+        page:
+            Página que será observada.
+
+        messages:
+            Cola compartida opcional. Si no se proporciona,
+            el listener crea una cola privada, preservando el
+            comportamiento existente.
+        """
         self._page = page
-        self._messages: Queue[str] = Queue()
+        self._messages: Queue[str] = messages if messages is not None else Queue()
+
         self._running = Event()
         self._registered = False
 
@@ -42,7 +60,10 @@ class WebSocketListener:
         if self._registered:
             return
 
-        self._page.on("websocket", self._on_websocket)
+        self._page.on(
+            "websocket",
+            self._on_websocket,
+        )
 
         self._running.set()
         self._registered = True
@@ -63,12 +84,17 @@ class WebSocketListener:
             Mensaje recibido desde el WebSocket.
         """
         while self._running.is_set():
+            self._page.wait_for_timeout(50)
+
             try:
-                yield self._messages.get(timeout=0.25)
+                yield self._messages.get_nowait()
             except Empty:
                 continue
 
-    def _on_websocket(self, websocket: WebSocket) -> None:
+    def _on_websocket(
+        self,
+        websocket: WebSocket,
+    ) -> None:
         """
         Registra los callbacks para un WebSocket recién creado.
 
@@ -77,12 +103,23 @@ class WebSocketListener:
         websocket:
             WebSocket proporcionado por Playwright.
         """
+        print(f"[WebSocketListener] WebSocket detected: {websocket.url}")
+
+        if "/game" not in websocket.url:
+            print("[WebSocketListener] Ignored.")
+            return
+
+        print("[WebSocketListener] GAME WebSocket registered.")
+
         websocket.on(
             "framereceived",
             self._on_frame_received,
         )
 
-    def _on_frame_received(self, payload: bytes | str) -> None:
+    def _on_frame_received(
+        self,
+        payload: bytes | str,
+    ) -> None:
         """
         Almacena un mensaje recibido.
 
@@ -92,6 +129,19 @@ class WebSocketListener:
             Contenido del frame recibido.
         """
         if isinstance(payload, bytes):
-            payload = payload.decode("utf-8", errors="replace")
+            print(f"[Frame] bytes={len(payload)}")
+        else:
+            preview = payload[:200].replace("\n", "\\n")
+
+            print()
+            print("========== FRAME ==========")
+            print(preview)
+            print("===========================")
+
+        if isinstance(payload, bytes):
+            payload = payload.decode(
+                "utf-8",
+                errors="replace",
+            )
 
         self._messages.put(payload)

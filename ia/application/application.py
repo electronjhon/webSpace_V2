@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 
 from ia.application.enums import ApplicationState
 from ia.application.exceptions import (
-    ApplicationInitializationError,
     ApplicationRuntimeError,
 )
 from ia.application.models.application_context import (
@@ -59,15 +58,15 @@ class SpaceAIApplication:
         return self._state is not ApplicationState.CREATED
 
     def initialize(self) -> None:
-        """
-        Initializes the application.
-        """
+
+        print("[Application] initialize()")
+
         if self._state is not ApplicationState.CREATED:
-            raise ApplicationInitializationError(
-                "The application has already been initialized.",
-            )
+            ...
 
         self.context.collector.connect()
+
+        print("[Application] collector connected")
 
         self._state = ApplicationState.INITIALIZED
 
@@ -82,6 +81,9 @@ class SpaceAIApplication:
 
         self._state = ApplicationState.RUNNING
 
+        print("[Application] run()")
+        print("[Application] waiting for observations...")
+
         for window in self.context.rolling_window_builder.build(
             self.context.collector.observations(),
         ):
@@ -89,9 +91,13 @@ class SpaceAIApplication:
             # Delegate the complete AI processing to
             # the pipeline.
             #
-            self.context.pipeline.process(
-                window,
+            print(
+                f"[Application] Rolling window ready " f"({len(window)} observations)"
             )
+
+            self.context.pipeline.process(window)
+
+            print("[Application] Pipeline processed window")
 
     def shutdown(self) -> None:
         """

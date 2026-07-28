@@ -53,16 +53,19 @@ class PlaywrightAdapter(BrowserAdapter):
         self._parser = SpacemanProtocolParser()
 
     def connect(self) -> None:
-        """
-        Establece la conexión con el navegador.
-        """
+
+        print("[Adapter] connect()")
+
         self._session.connect()
+        print("[Adapter] BrowserSession connected")
 
         self._listener = WebSocketListener(
             self._session.page,
         )
+        print("[Adapter] Listener created")
 
         self._listener.start()
+        print("[Adapter] Listener started")
 
     def disconnect(self) -> None:
         """
@@ -106,4 +109,13 @@ class PlaywrightAdapter(BrowserAdapter):
             )
 
         for message in self._listener.messages():
-            yield from self._parser.parse(message)
+
+            for event in self._parser.parse(message):
+
+                print(
+                    "[Adapter] BrowserEvent -> "
+                    f"game_id={event.game_id}, "
+                    f"multiplier={event.multiplier}"
+                )
+
+                yield event

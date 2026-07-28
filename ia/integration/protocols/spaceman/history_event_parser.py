@@ -88,6 +88,8 @@ class HistoryEventParser:
             if multiplier <= 0.0:
                 continue
 
+            print(f"[HistoryParser] " f"{game_id} -> {multiplier}")
+
             yield BrowserEvent.create(
                 game_id=int(game_id),
                 multiplier=multiplier,

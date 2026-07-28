@@ -14,14 +14,12 @@ Autor: Space AI 2.0
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 
 from ia.integration.models.browser_event import BrowserEvent
 
-from .constants import (
-    DEFAULT_EVENT_SOURCE,
-    ROUND_RESULT_PATTERN,
-)
+from .constants import DEFAULT_EVENT_SOURCE
 
 
 class RoundEventParser:
@@ -30,6 +28,10 @@ class RoundEventParser:
 
     Un mensaje puede producir cero o un BrowserEvent.
     """
+
+    _GAME_ID_PATTERN = re.compile(r'gId="(?P<game_id>\d+)"')
+
+    _RESULT_PATTERN = re.compile(r'result="(?P<result>[0-9]+(?:\.[0-9]+)?)"')
 
     def parse(
         self,
@@ -49,19 +51,31 @@ class RoundEventParser:
             Evento correspondiente a la ronda.
         """
 
-        match = ROUND_RESULT_PATTERN.search(message)
+        if "<gr" not in message:
+            return
 
-        if match is None:
+        game_id_match = self._GAME_ID_PATTERN.search(message)
+
+        result_match = self._RESULT_PATTERN.search(message)
+
+        if game_id_match is None or result_match is None:
             return
 
         try:
-            game_id = int(match.group("game_id"))
-            multiplier = float(match.group("result"))
+
+            game_id = int(game_id_match.group("game_id"))
+
+            multiplier = float(result_match.group("result"))
+
         except (TypeError, ValueError):
+
             return
 
-        if multiplier <= 0.0:
+        if multiplier <= 0:
+
             return
+
+        print(f"[RoundParser] " f"{game_id} -> {multiplier}")
 
         yield BrowserEvent.create(
             game_id=game_id,
