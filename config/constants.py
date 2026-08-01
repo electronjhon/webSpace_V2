@@ -76,3 +76,7 @@ DEFAULT_STRATEGY = "1.5x + 2x"
 MAX_HISTORY = 500000
 
 HEARTBEAT_ROUNDS = 15
+
+# ============================================
+
+MIN_MARKOV_TRANSITIONS = 10

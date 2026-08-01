@@ -30,7 +30,7 @@ with sync_playwright() as p:
 
     for context in browser.contexts:
 
-        context: BrowserContext
+        browser_context: BrowserContext
 
         context.on("page", on_page)
 

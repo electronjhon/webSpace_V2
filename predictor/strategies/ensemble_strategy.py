@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from feature_engine.models.feature_vector import FeatureVector
 from predictor.prediction_result import PredictionResult
+from predictor.prediction_status import PredictionStatus
 from predictor.strategies.base_strategy import BaseStrategy
 from predictor.strategies.bayesian_strategy import BayesianStrategy
 from predictor.strategies.markov_strategy import MarkovStrategy
@@ -56,6 +57,22 @@ class EnsembleStrategy(BaseStrategy):
             history=history,
         )
 
+        #
+        # Si una estrategia aún no está disponible,
+        # utilizar la otra.
+        #
+        if markov_result.status is not PredictionStatus.READY:
+            return bayesian_result
+
+        if bayesian_result.status is not PredictionStatus.READY:
+            return markov_result
+
+        #
+        # En este punto ambas predicciones existen.
+        #
+        assert markov_result.prediction is not None
+        assert bayesian_result.prediction is not None
+
         if (
             markov_result.prediction.confidence.value
             >= bayesian_result.prediction.confidence.value
@@ -74,8 +91,8 @@ __all__ = [
 # TERMINADO
 #
 # Congelado:
-# SÍ
+# NO
 #
 # Versión:
-# 1.0.0
+# 2.0.0
 # ---------------------------------------------------------------------

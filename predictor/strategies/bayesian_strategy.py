@@ -12,6 +12,7 @@ from feature_engine.models.feature_vector import FeatureVector
 from predictor.confidence import Confidence
 from predictor.prediction import Prediction
 from predictor.prediction_result import PredictionResult
+from predictor.prediction_status import PredictionStatus
 from predictor.probability import Probability
 from predictor.strategies.base_strategy import BaseStrategy
 from state_engine.models.classification_result import (
@@ -73,6 +74,7 @@ class BayesianStrategy(BaseStrategy):
         )
 
         return PredictionResult(
+            status=PredictionStatus.READY,
             prediction=prediction,
         )
 
@@ -89,5 +91,5 @@ __all__ = [
 # SÍ
 #
 # Versión:
-# 1.0.0
+# 2.0.0
 # ---------------------------------------------------------------------

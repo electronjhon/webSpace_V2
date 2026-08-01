@@ -29,6 +29,7 @@ from ia.learning_engine.learning_engine import LearningEngine
 from ia.signal_engine.configuration import SignalConfiguration
 from ia.signal_engine.context import SignalContext
 from ia.signal_engine.signal_engine import SignalEngine
+from predictor.prediction_status import PredictionStatus
 from predictor.predictor_engine import PredictorEngine
 from predictor.strategies.strategy_type import StrategyType
 from state_engine.models.state_engine_result import (
@@ -122,7 +123,17 @@ class AIPipeline:
         # Persist the updated immutable history.
         #
 
+        #
+        # Persist the updated immutable history.
+        #
+
         self._history = state_result.history
+
+        print("\n========== STATE HISTORY ==========")
+        print(f"States      : {len(self._history.states)}")
+        print(f"Transitions : {len(self._history.transitions)}")
+
+        print("===================================\n")
 
         logger.debug(
             "[State] Generated classification: labels=%s, confidence=%s, "
@@ -143,6 +154,24 @@ class AIPipeline:
             classification=state_result.classification,
             history=self._history,
         )
+
+        #
+        # Predictor warm-up.
+        #
+        if prediction_result.status is not PredictionStatus.READY:
+
+            logger.info(
+                "[Prediction] %s",
+                prediction_result.reason,
+            )
+
+            print(
+                f"[Prediction] {prediction_result.reason}",
+            )
+
+            return
+
+        assert prediction_result.prediction is not None
 
         logger.debug(
             "[Prediction] Generated prediction: strategy=%s, labels=%s, "
