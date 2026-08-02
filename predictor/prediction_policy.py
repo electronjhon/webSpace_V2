@@ -3,7 +3,7 @@ Space AI 2.0
 
 Prediction Policy
 
-Evaluates whether a prediction strategy is ready
+Determines whether a prediction strategy is ready
 to execute.
 """
 
@@ -27,8 +27,8 @@ class PredictionPolicy:
         history: StateHistory,
     ) -> PredictionStatus:
         """
-        Evaluate whether the selected strategy is
-        ready to execute.
+        Evaluate whether the selected prediction
+        strategy can execute.
 
         Parameters
         ----------
@@ -41,7 +41,7 @@ class PredictionPolicy:
         Returns
         -------
         PredictionStatus
-            Current availability of the strategy.
+            Availability of the strategy.
         """
 
         match strategy:
@@ -69,5 +69,5 @@ __all__ = [
 # NO
 #
 # Versión:
-# 2.0.0
+# 2.1.0
 # ---------------------------------------------------------------------

@@ -11,6 +11,12 @@ from __future__ import annotations
 
 from feature_engine.models.feature_vector import FeatureVector
 from predictor.confidence import Confidence
+from predictor.debug.markov_debug_printer import (
+    MarkovDebugPrinter,
+)
+from predictor.models.markov_state_extractor import (
+    MarkovStateExtractor,
+)
 from predictor.models.transition_matrix_builder import (
     TransitionMatrixBuilder,
 )
@@ -83,13 +89,18 @@ class MarkovStrategy(BaseStrategy):
                 "Unable to determine current state.",
             )
 
-        transition = matrix.most_probable(
+        current_markov_state = MarkovStateExtractor.extract(
             current_state,
         )
 
+        transition = matrix.most_probable(
+            current_markov_state,
+        )
+
         if transition is None:
-            raise ValueError(
-                "No outgoing transition available for the current state.",
+            return PredictionResult(
+                status=PredictionStatus.WARMUP,
+                reason=("Current state has no outgoing " "Markov transitions."),
             )
 
         prediction = Prediction(
@@ -98,6 +109,12 @@ class MarkovStrategy(BaseStrategy):
             confidence=Confidence(
                 value=transition.probability.value,
             ),
+        )
+
+        MarkovDebugPrinter.print_prediction(
+            current_state=current_markov_state,
+            transition=transition,
+            status=PredictionStatus.READY,
         )
 
         return PredictionResult(

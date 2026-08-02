@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from core.logging.logger import Logger
 from ia.application.enums import ApplicationState
 from ia.application.exceptions import (
     ApplicationRuntimeError,
@@ -59,14 +60,18 @@ class SpaceAIApplication:
 
     def initialize(self) -> None:
 
-        print("[Application] initialize()")
+        Logger.info(
+            "[Application] initialize()",
+        )
 
         if self._state is not ApplicationState.CREATED:
             ...
 
         self.context.collector.connect()
 
-        print("[Application] collector connected")
+        Logger.info(
+            "[Application] collector connected",
+        )
 
         self._state = ApplicationState.INITIALIZED
 
@@ -81,8 +86,12 @@ class SpaceAIApplication:
 
         self._state = ApplicationState.RUNNING
 
-        print("[Application] run()")
-        print("[Application] waiting for observations...")
+        Logger.info(
+            "[Application] run()",
+        )
+        Logger.info(
+            "[Application] waiting for observations...",
+        )
 
         for window in self.context.rolling_window_builder.build(
             self.context.collector.observations(),
@@ -91,13 +100,15 @@ class SpaceAIApplication:
             # Delegate the complete AI processing to
             # the pipeline.
             #
-            print(
-                f"[Application] Rolling window ready " f"({len(window)} observations)"
+            Logger.info(
+                f"[Application] Rolling window ready " f"({len(window)} observations)",
             )
 
             self.context.pipeline.process(window)
 
-            print("[Application] Pipeline processed window")
+            Logger.info(
+                "[Application] Pipeline processed window",
+            )
 
     def shutdown(self) -> None:
         """

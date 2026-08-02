@@ -20,6 +20,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
+from core.logging.logger import Logger
 from core.types import Number
 from core.windows import RollingWindow
 from feature_engine.feature_engine import FeatureEngine
@@ -129,11 +130,13 @@ class AIPipeline:
 
         self._history = state_result.history
 
-        print("\n========== STATE HISTORY ==========")
-        print(f"States      : {len(self._history.states)}")
-        print(f"Transitions : {len(self._history.transitions)}")
-
-        print("===================================\n")
+        Logger.info_block(
+            "STATE HISTORY",
+            (
+                f"States      : {len(self._history.states)}\n"
+                f"Transitions : {len(self._history.transitions)}"
+            ),
+        )
 
         logger.debug(
             "[State] Generated classification: labels=%s, confidence=%s, "
@@ -165,7 +168,7 @@ class AIPipeline:
                 prediction_result.reason,
             )
 
-            print(
+            Logger.info(
                 f"[Prediction] {prediction_result.reason}",
             )
 

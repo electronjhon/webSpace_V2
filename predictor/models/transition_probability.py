@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from predictor.models.markov_state import MarkovState
 from predictor.probability import Probability
-from state_engine.state import State
 
 
 @dataclass(
@@ -23,14 +23,14 @@ class TransitionProbability:
     Immutable transition probability.
 
     Represents the probability of transitioning
-    from one state to another.
+    from one Markov state to another.
 
     This object contains no business logic.
     """
 
-    source: State
+    source: MarkovState
 
-    target: State
+    target: MarkovState
 
     probability: Probability
 
@@ -47,5 +47,5 @@ __all__ = [
 # SÍ
 #
 # Versión:
-# 1.0.0
+# 1.1.0
 # ---------------------------------------------------------------------

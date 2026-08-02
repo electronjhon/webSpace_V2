@@ -7,6 +7,8 @@ Todas las constantes utilizadas por la IA
 deben vivir aquí.
 """
 
+from core.logging.log_level import LogLevel
+
 # ============================================
 # WINDOWS
 # ============================================
@@ -80,3 +82,9 @@ HEARTBEAT_ROUNDS = 15
 # ============================================
 
 MIN_MARKOV_TRANSITIONS = 10
+
+# ---------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------
+
+LOG_LEVEL = LogLevel.INFO

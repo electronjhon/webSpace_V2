@@ -11,10 +11,11 @@ from __future__ import annotations
 
 from collections import Counter
 
+from predictor.models.markov_state import MarkovState
+from predictor.models.markov_state_extractor import MarkovStateExtractor
 from predictor.models.transition_matrix import TransitionMatrix
 from predictor.models.transition_probability import TransitionProbability
 from predictor.probability import Probability
-from state_engine.state import State
 from state_engine.state_history import StateHistory
 
 
@@ -43,13 +44,22 @@ class TransitionMatrixBuilder:
         if len(history.transitions) == 0:
             return TransitionMatrix()
 
-        transition_counts: Counter[tuple[State, State]] = Counter()
-        outgoing_counts: Counter[State] = Counter()
+        transition_counts: Counter[tuple[MarkovState, MarkovState]] = Counter()
+
+        outgoing_counts: Counter[MarkovState] = Counter()
 
         for transition in history.transitions:
-            transition_counts[(transition.from_state, transition.to_state)] += 1
+            source = MarkovStateExtractor.extract(
+                transition.from_state,
+            )
 
-            outgoing_counts[transition.from_state] += 1
+            target = MarkovStateExtractor.extract(
+                transition.to_state,
+            )
+
+            transition_counts[(source, target)] += 1
+
+            outgoing_counts[source] += 1
 
         probabilities: list[TransitionProbability] = []
 
@@ -83,5 +93,5 @@ __all__ = [
 # SÍ
 #
 # Versión:
-# 1.0.0
+# 1.1.0
 # ---------------------------------------------------------------------

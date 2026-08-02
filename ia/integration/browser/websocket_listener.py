@@ -20,6 +20,8 @@ from threading import Event
 
 from playwright.sync_api import Page, WebSocket
 
+from core.logging.logger import Logger
+
 
 class WebSocketListener:
     """
@@ -103,13 +105,13 @@ class WebSocketListener:
         websocket:
             WebSocket proporcionado por Playwright.
         """
-        print(f"[WebSocketListener] WebSocket detected: {websocket.url}")
+        Logger.debug(f"[WebSocketListener] WebSocket detected: {websocket.url}")
 
         if "/game" not in websocket.url:
-            print("[WebSocketListener] Ignored.")
+            Logger.debug("[WebSocketListener] Ignored.")
             return
 
-        print("[WebSocketListener] GAME WebSocket registered.")
+        Logger.info("[WebSocketListener] GAME WebSocket registered.")
 
         websocket.on(
             "framereceived",
@@ -129,14 +131,14 @@ class WebSocketListener:
             Contenido del frame recibido.
         """
         if isinstance(payload, bytes):
-            print(f"[Frame] bytes={len(payload)}")
+            Logger.debug(f"[Frame] bytes={len(payload)}")
         else:
             preview = payload[:200].replace("\n", "\\n")
 
-            print()
-            print("========== FRAME ==========")
-            print(preview)
-            print("===========================")
+            Logger.debug_block(
+                "FRAME",
+                preview,
+            )
 
         if isinstance(payload, bytes):
             payload = payload.decode(
