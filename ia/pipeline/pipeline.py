@@ -12,6 +12,11 @@ It orchestrates every engine while remaining free of
 business rules.
 
 Author: Space AI 2.0
+
+Sprint:
+    15
+Version:
+    1.2.0
 """
 
 from __future__ import annotations
@@ -27,6 +32,15 @@ from feature_engine.feature_engine import FeatureEngine
 from ia.decision_engine.decision_context import DecisionContext
 from ia.decision_engine.decision_engine import DecisionEngine
 from ia.learning_engine.learning_engine import LearningEngine
+from ia.learning_engine.models.learning_evaluation_context import (
+    LearningEvaluationContext,
+)
+from ia.learning_engine.models.observed_outcome import (
+    ObservedOutcome,
+)
+from ia.learning_engine.scoring.learning_score_calculator import (
+    LearningScoreCalculator,
+)
 from ia.signal_engine.configuration import SignalConfiguration
 from ia.signal_engine.context import SignalContext
 from ia.signal_engine.signal_engine import SignalEngine
@@ -71,6 +85,18 @@ class AIPipeline:
         repr=False,
     )
 
+    _pending_learning: LearningEvaluationContext | None = field(
+        default=None,
+        init=False,
+        repr=False,
+    )
+
+    _round_count: int = field(
+        default=0,
+        init=False,
+        repr=False,
+    )
+
     def process(
         self,
         window: RollingWindow[Number],
@@ -84,6 +110,12 @@ class AIPipeline:
             Rolling window produced by the integration
             layer.
         """
+
+        self._round_count += 1
+
+        Logger.info(
+            f"[Pipeline Round {self._round_count}]",
+        )
 
         logger.debug(
             "[Pipeline] Received window: capacity=%d, size=%d, values=%s",
@@ -124,10 +156,6 @@ class AIPipeline:
         # Persist the updated immutable history.
         #
 
-        #
-        # Persist the updated immutable history.
-        #
-
         self._history = state_result.history
 
         Logger.info_block(
@@ -148,6 +176,52 @@ class AIPipeline:
         )
 
         #
+        # Prediction evaluation
+        #
+        # The current classification represents the observed state
+        # against which the previous prediction is evaluated.
+        #
+        # This evaluation is independent from Decision and Signal.
+        #
+
+        if self._pending_learning is not None:
+            observed_outcome = ObservedOutcome(
+                labels=state_result.classification.labels,
+            )
+
+            learning_score = LearningScoreCalculator.calculate(
+                prediction=self._pending_learning.prediction,
+                observed_outcome=observed_outcome,
+            )
+
+            self.learning_engine, outcome = self.learning_engine.evaluate_prediction(
+                prediction=self._pending_learning.prediction,
+                classification=self._pending_learning.classification,
+                observed_outcome=observed_outcome,
+                learning_score=learning_score,
+            )
+
+            Logger.info(
+                "[Learning] Prediction evaluation completed: "
+                f"score={learning_score.value}, "
+                f"outcome={outcome.value}",
+            )
+
+            #
+            # Show accumulated prediction metrics every
+            # 10 completed evaluations.
+            #
+
+            evaluated = self.learning_engine.prediction_metrics.total
+
+            if evaluated > 0 and evaluated % 10 == 0:
+                Logger.info(
+                    self.learning_engine.prediction_metrics_summary,
+                )
+
+            self._pending_learning = None
+
+        #
         # Prediction
         #
 
@@ -161,8 +235,8 @@ class AIPipeline:
         #
         # Predictor warm-up.
         #
-        if prediction_result.status is not PredictionStatus.READY:
 
+        if prediction_result.status is not PredictionStatus.READY:
             logger.info(
                 "[Prediction] %s",
                 prediction_result.reason,
@@ -183,6 +257,21 @@ class AIPipeline:
             prediction_result.prediction.labels,
             prediction_result.prediction.probability,
             prediction_result.prediction.confidence,
+        )
+
+        #
+        # Store the prediction immediately.
+        #
+        # Learning no longer depends on Signal acceptance.
+        #
+
+        self._pending_learning = LearningEvaluationContext(
+            classification=state_result.classification,
+            prediction=prediction_result.prediction,
+        )
+
+        Logger.info(
+            "[Learning] Pending prediction stored",
         )
 
         #
@@ -222,7 +311,20 @@ class AIPipeline:
         )
 
         #
-        # Remaining stages will be connected
-        # progressively while preserving the
-        # architecture of each engine.
+        # Diagnostic information for the learning integration.
+        #
+
+        Logger.info(
+            "[Signal] "
+            f"accepted={signal_result.accepted}, "
+            f"reason={signal_result.reason}, "
+            f"signal={signal_result.signal}",
+        )
+
+        #
+        # Signal-based learning remains available independently.
+        #
+        # At this stage the predictive-learning context is already
+        # stored above. A rejected signal therefore does not prevent
+        # prediction evaluation.
         #
